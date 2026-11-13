@@ -1,0 +1,53 @@
+-- 트랜잭션과 격리 수준 실습 (docs/sql-lab-kit.md 5장, 결과는 docs/sql-lab-log.md 5장)
+-- 이 파일은 한 번에 실행하는 스크립트가 아니다.
+-- MobaXterm 탭 두 개에서 각각 psql -d labdb 로 접속하고, [A] [B] 표시대로 위에서부터 한 줄씩 실행한다.
+-- BEGIN 뒤에는 프롬프트가 labdb=*# 로 바뀌었는지 확인한다.
+
+-- 5-2. 더티 리드 방지 ------------------------------------------------
+-- [A] UPDATE accounts SET balance = 100000;
+-- [A] BEGIN;
+-- [A] UPDATE accounts SET balance = balance - 30000 WHERE id = 1;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 100000
+-- [A] COMMIT;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 70000
+
+-- 5-3. READ COMMITTED: 반복 불가능 읽기 --------------------------------
+-- [A] UPDATE accounts SET balance = 100000;
+-- [B] BEGIN;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 100000
+-- [A] UPDATE accounts SET balance = balance + 10000 WHERE id = 1;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 110000
+-- [B] COMMIT;
+
+-- 5-4. REPEATABLE READ: 직렬화 실패 ------------------------------------
+-- [A] UPDATE accounts SET balance = 100000;
+-- [B] BEGIN ISOLATION LEVEL REPEATABLE READ;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 100000
+-- [A] UPDATE accounts SET balance = balance + 10000 WHERE id = 1;
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 100000
+-- [B] UPDATE accounts SET balance = balance - 5000 WHERE id = 1;
+--     ERROR:  could not serialize access due to concurrent update
+-- [B] ROLLBACK;
+
+-- 5-5. 행 수준 잠금 대기 --------------------------------------------
+-- [A] UPDATE accounts SET balance = 100000;
+-- [A] BEGIN;
+-- [A] UPDATE accounts SET balance = balance - 1000 WHERE id = 1;
+-- [B] UPDATE accounts SET balance = balance - 2000 WHERE id = 1;   -- 멈춤
+-- [세 번째 탭, postgres $]
+--     psql -d labdb -c "SELECT pid, state, wait_event_type, wait_event, left(query, 60) AS query FROM pg_stat_activity WHERE datname = 'labdb';"
+--     B의 줄: active, Lock, transactionid
+-- [A] COMMIT;                                               -- B의 UPDATE가 끝남
+-- [B] SELECT balance FROM accounts WHERE id = 1;          -- 97000
+
+-- 5-6. 교착 상태 ---------------------------------------------------
+-- [A] UPDATE accounts SET balance = 100000;
+-- [A] BEGIN;
+-- [A] UPDATE accounts SET balance = balance - 1 WHERE id = 1;
+-- [B] BEGIN;
+-- [B] UPDATE accounts SET balance = balance - 1 WHERE id = 2;
+-- [A] UPDATE accounts SET balance = balance - 1 WHERE id = 2;      -- 멈춤
+-- [B] UPDATE accounts SET balance = balance - 1 WHERE id = 1;
+--     약 1초 뒤 ERROR:  deadlock detected
+-- [A] COMMIT;
+-- [B] ROLLBACK;
