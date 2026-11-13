@@ -60,6 +60,8 @@ oracle/
   answers_changed.sql      Oracle 에서 고쳐 쓴 문장, WITH 절, SQLD 범위 추가 문제 (ROLLUP, PIVOT, 상위 N건)
   index_lab.sql            DBMS_XPLAN.DISPLAY_CURSOR 로 본 인덱스와 조인 실습
   transaction_lab.sql      세 세션으로 하는 격리 수준, 잠금, 교착 실습과 이체 프로시저
+answers/
+  answers_q1-q16_3dbms.sql 16문제마다 PostgreSQL, MySQL, Oracle 정답을 나란히 (MySQL, Oracle 판은 문법 검사와 변환 실행으로 확인)
 docs/
   syntax-differences.md    세 DBMS 의 문법과 동작 차이
   mysql-isolation.md       MySQL 격리 수준 네 단계 기록
