@@ -2,7 +2,7 @@
 -- 실행 위치: dbts93, oracle 계정, PDB pdb 의 SHOP 사용자로 접속한 SQL*Plus
 --   export NLS_LANG=AMERICAN_AMERICA.AL32UTF8      (한글이 깨지지 않게, 이 파일은 UTF-8)
 --   sqlplus shop@//localhost:1521/pdb               (비밀번호는 물어볼 때 입력)
---   SQL> @data_21-ora_lab_setup.sql
+--   SQL> @lab_setup.sql
 -- 이 파일은 테이블을 만들기만 한다. 지우는 문장은 없다. 다시 만들려면 먼저 승인받고 지운다.
 --
 -- PostgreSQL 과 다르게 쓴 곳
